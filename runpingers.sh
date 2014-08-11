@@ -4,6 +4,9 @@ BRIDGE=br-em1
 BASEADDR=192.168.1.170
 NETMASK=24
 PIPEWORK=$HOME/bin/pipework
+NUMPINGERS=${1:-4}
+
+docker build -t pinger .
 
 etcd=$(docker run -d --name etcd coreos/etcd || echo FAIL)
 if [ "$etcd" = "FAIL" ]; then
@@ -16,7 +19,7 @@ pingers=()
 base_prefix=${BASEADDR%.*}
 base_suffix=${BASEADDR##*.}
 
-for x in {0..3}; do
+for ((x=0; x<NUMPINGERS; x++)); do
 	pingers[$x]=$(docker run -d --link etcd:etcd --name pinger$x pinger)
 	pingerip="${base_prefix}.$(( $base_suffix + $x ))"
 	echo "pinger $x is ${pingers[$x]} @ $pingerip"
